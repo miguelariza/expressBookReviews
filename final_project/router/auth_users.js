@@ -34,24 +34,33 @@ const authenticatedUser = (username,password)=>{ //returns boolean
 regd_users.post("/login", (req,res) => {
   const username = req.body.username;
   const password = req.body.password;
-  req.session.username = username;
 
   if (!username || !password) {
     return res.status(404).json({message: "Error logging in"});
+  }
+
+  if (req.session.authorization?.username === username) {
+    return res.status(409).json({ 
+      message: `User "${username}" is already logged in`,
+      action: "Use /logout to end session or continue using the app"
+    });
   }
 
   if(authenticatedUser(username, password)) {
     let accessToken = jwt.sign({
         data: password
         },
-        'access', { expiresIn: 60 * 60 });
+        'access', { expiresIn: 60 * 2 });
 
     req.session.authorization = {
         accessToken, username
     }
-    return res.status(200).send("User successfully logged in");
+
+    req.session.username = username;
+    
+    return res.status(200).send({message: "User successfully logged in"});
   } else {
-    return res.status(208).json({message: "Invalid login. Check username and password"});
+    return res.status(401).json({message: "Invalid login. Check username and password"});
   }
 });
 
@@ -72,7 +81,7 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
         books[isbn].reviews = {};
     }
 
-    const newReview = req.body.review || req.query.review;
+    const newReview = req.body.review || req.query.review || req.params.review;
 
     if (!newReview) {
         return res.status(400).json({ message: "Review content is required" });

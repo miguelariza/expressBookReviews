@@ -47,23 +47,40 @@ public_users.get('/isbn/:isbn',function (req, res) {
 });
   
 // Get book details based on author
-public_users.get('/author/:author',function (req, res) {
-    const booksByAuthor = req.params.author;
-    let results = [];
-    for (const [key, value] of Object.entries(books)) {
-        //console.log(`${key}: ${value}`);
-        if (value.author === booksByAuthor) {
-          results.push(value);
+public_users.get('/author/:author', async (req, res) => {
+    try {
+        const booksByAuthor = req.params.author;
+
+        if (!booksByAuthor || booksByAuthor.trim() === '') {
+            return res.status(400).json({
+                message: 'Author parameter is required',
+                error: 'BAD_REQUEST'
+            });
         }
-      }
-    //res.send(results);
-    Promise.resolve(results)
-      .then(data => {
-        res.status(200).json(data);
-      })
-      .catch(error => {
-        res.status(500).json({ message: 'Internal server error' });  
-      });
+
+        if (!books || Object.keys(books).length === 0) {
+            return res.status(503).json({
+                message: 'Book data currently unavailable',
+                error: 'SERVICE_UNAVAILABLE'
+            });
+        }
+
+        const results = Object.values(books).filter(book => book.author === booksByAuthor);
+
+        if (results.length === 0) {
+            return res.status(404).json({
+                message: `No books found for author: "${booksByAuthor}"`,
+                error: 'AUTHOR_NOT_FOUND',
+            });
+        } else {
+            res.status(200).json(results);
+        }
+        
+        
+    } catch (error) {
+        console.error('Error fetching books by author:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 });
 
 // Get all books based on title
