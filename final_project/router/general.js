@@ -22,13 +22,28 @@ public_users.post("/register", (req,res) => {
 
 // Get the book list available in the shop
 public_users.get('/',function (req, res) {
-    res.send(JSON.stringify(books, null, 4));
+    //res.status(200).send(JSON.stringify(books, null, 4));
+    Promise.resolve(books)
+        .then(data => {
+            res.status(200).json(data); // ✅ Use .json() instead of JSON.stringify()
+        })
+        .catch(error => {
+            console.error('Error fetching books:', error);
+            res.status(500).json({ message: 'Internal server error' });
+        });
 });
 
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn',function (req, res) {
     const detailsByIsbn = req.params.isbn;
-    res.send(books[detailsByIsbn]);
+    Promise.resolve(books[detailsByIsbn])
+        .then(data => {
+            res.status(200).json(data);
+        })
+        .catch(error => {
+            res.status(500).json({ message: 'Internal server error' });  
+        });
+    //res.send(books[detailsByIsbn]);
 });
   
 // Get book details based on author
@@ -41,7 +56,14 @@ public_users.get('/author/:author',function (req, res) {
           results.push(value);
         }
       }
-    res.send(results);
+    //res.send(results);
+    Promise.resolve(results)
+      .then(data => {
+        res.status(200).json(data);
+      })
+      .catch(error => {
+        res.status(500).json({ message: 'Internal server error' });  
+      });
 });
 
 // Get all books based on title
@@ -54,7 +76,14 @@ public_users.get('/title/:title',function (req, res) {
           results.push(value);
         }
       }
-    res.send(results);
+    //res.send(results);
+    Promise.resolve(results)
+      .then(data => {
+        res.status(200).json(data);
+      })
+      .catch(error => {
+        res.status(500).json({ message: 'Internal server error' });  
+      });
 });
 
 //  Get book review
