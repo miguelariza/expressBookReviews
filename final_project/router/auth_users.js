@@ -61,10 +61,22 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
     const currentUser = req.session.username;
     
     if (!currentUser) {
-        return res.status(401).send('User not logged in');
+        return res.status(401).json({messsage: 'User not logged in'});
+    }
+
+    if (!books[isbn]) {
+        return res.status(404).json({message: "Book not found"});
+    }
+
+    if (!books[isbn].reviews) {
+        books[isbn].reviews = {};
     }
 
     const newReview = req.body.review || req.query.review;
+
+    if (!newReview) {
+        return res.status(400).json({ message: "Review content is required" });
+    }
 
     books[isbn].reviews[currentUser] = newReview;
 
@@ -73,6 +85,28 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
         reviews: books[isbn].reviews 
     });
 
+});
+
+// Delete a book review
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+    const isbn = req.params.isbn;
+    const currentUser = req.session.username;
+
+    let allReviews = books[isbn].reviews;
+
+    const filteredByUser = Object.keys(allReviews)
+    .filter(key => !key.includes(currentUser))
+    .reduce((result, key) => {
+        result[key] = allReviews[key];
+        return result;
+    }, {});
+
+    books[isbn].reviews = filteredByUser;
+
+    return res.status(200).json({ 
+        message: `Reviews from ${currentUser} has been deleted.`,
+        reviews: books[isbn].allReviews 
+    });
 });
 
 module.exports.authenticated = regd_users;
