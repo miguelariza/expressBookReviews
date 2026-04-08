@@ -23,27 +23,46 @@ public_users.post("/register", (req,res) => {
 // Get the book list available in the shop
 public_users.get('/',function (req, res) {
     //res.status(200).send(JSON.stringify(books, null, 4));
-    Promise.resolve(books)
-        .then(data => {
-            res.status(200).json(data); // ✅ Use .json() instead of JSON.stringify()
-        })
-        .catch(error => {
-            console.error('Error fetching books:', error);
-            res.status(500).json({ message: 'Internal server error' });
-        });
+    try {
+        if (Object.keys(books).length > 0) {
+            res.status(200).send(JSON.stringify(books, null, 4));
+        } else {
+            return res.status(404).json({
+                message: `No books found"`,
+                error: 'BOOKS_NOT_FOUND',
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching books:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    } 
 });
 
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn',function (req, res) {
-    const detailsByIsbn = req.params.isbn;
-    Promise.resolve(books[detailsByIsbn])
-        .then(data => {
-            res.status(200).json(data);
-        })
-        .catch(error => {
-            res.status(500).json({ message: 'Internal server error' });  
-        });
-    //res.send(books[detailsByIsbn]);
+    try {
+        const detailsByIsbn = req.params.isbn;
+
+        if (!detailsByIsbn || detailsByIsbn.trim() === '') {
+            return res.status(400).json({
+                message: 'ISBN parameter is required',
+                error: 'BAD_REQUEST'
+            });
+        }
+
+        if (books.hasOwnProperty(detailsByIsbn)) {
+            res.status(200).json(books[detailsByIsbn]);
+        } else {
+            return res.status(404).json({
+                message: `No ISBN found: "${detailsByIsbn}"`,
+                error: 'ISBN_NOT_FOUND',
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error fetching books by ISBN:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 });
   
 // Get book details based on author
@@ -85,22 +104,37 @@ public_users.get('/author/:author', async (req, res) => {
 
 // Get all books based on title
 public_users.get('/title/:title',function (req, res) {
-    const booksByTitle = req.params.title;
-    let results = [];
-    for (const [key, value] of Object.entries(books)) {
-        //console.log(`${key}: ${value}`);
-        if (value.title === booksByTitle) {
-          results.push(value);
-        }
-      }
     //res.send(results);
-    Promise.resolve(results)
-      .then(data => {
-        res.status(200).json(data);
-      })
-      .catch(error => {
-        res.status(500).json({ message: 'Internal server error' });  
-      });
+    try {
+        const booksByTitle = req.params.title;
+        let results = [];
+
+        if (!booksByTitle || booksByTitle.trim() === '') {
+            return res.status(400).json({
+                message: 'Title parameter is required',
+                error: 'BAD_REQUEST'
+            });
+        }
+
+        for (const [key, value] of Object.entries(books)) {
+            //console.log(`${key}: ${value}`);
+            if (value.title === booksByTitle) {
+              results.push(value);
+            }
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({
+                message: `No books found for title: "${booksByTitle}"`,
+                error: 'TITLE_NOT_FOUND',
+            });
+        } else {
+            res.status(200).json(results);
+        }
+    } catch (error) {
+        console.error('Error fetching books by title:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    } 
 });
 
 //  Get book review
