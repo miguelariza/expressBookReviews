@@ -36,7 +36,7 @@ regd_users.post("/login", (req,res) => {
   const password = req.body.password;
 
   if (!username || !password) {
-    return res.status(404).json({message: "Error logging in"});
+    return res.status(400).json({message: "Username and password are required"});
   }
 
   if (req.session.authorization?.username === username) {
@@ -58,7 +58,7 @@ regd_users.post("/login", (req,res) => {
 
     req.session.username = username;
     
-    return res.status(200).send({message: "User successfully logged in"});
+    return res.status(200).send({message: "Login Successful!"});
   } else {
     return res.status(401).json({message: "Invalid login. Check username and password"});
   }
