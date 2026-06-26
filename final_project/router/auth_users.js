@@ -113,7 +113,7 @@ regd_users.delete("/auth/review/:isbn", (req, res) => {
     books[isbn].reviews = filteredByUser;
 
     return res.status(200).json({ 
-        message: `Reviews from ${currentUser} has been deleted.`,
+        message: `Review for ISBN ${isbn} deleted.`,
         reviews: books[isbn].allReviews 
     });
 });
